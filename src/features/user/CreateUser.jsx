@@ -1,11 +1,19 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { updateName } from './userSlice';
 import Button from '../../ui/Button';
 
 function CreateUser() {
   const [username, setUsername] = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   function handleSubmit(e) {
     e.preventDefault();
+    if (!username) return;
+    dispatch(updateName(username)); // 入力値をReduxに保存
+    navigate('/menu'); // 保存後に遷移
   }
 
   return (
@@ -23,9 +31,7 @@ function CreateUser() {
       />
       {username !== '' && (
         <div>
-          <Button type="primary" to="/menu">
-            Start ordering
-          </Button>
+          <Button type="primary">Start ordering</Button>
         </div>
       )}
     </form>
