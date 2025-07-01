@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useActionData, useNavigation } from 'react-router-dom';
 import { Form, redirect } from 'react-router-dom';
 import { createOrder } from '../../services/apiRestaurant';
@@ -17,6 +17,8 @@ const isValidPhone = (str) =>
 
 function CreateOrder() {
   const [withPriority, setWithPriority] = useState(false);
+  const [addressInput, setAddressInput] = useState('');
+  const [didFetchAddress, setDidFetchAddress] = useState(false);
   const cart = useSelector(getCart);
   const dispatch = useDispatch();
 
@@ -26,15 +28,24 @@ function CreateOrder() {
 
   const formErrors = useActionData();
 
-  const username = useSelector((state) => state.user.username);
+  const {
+    username,
+    address,
+    status: addressStatus,
+    error,
+  } = useSelector((state) => state.user);
   const totalPrice = useSelector(totalCartPrice);
+
+  const isLoadingAddress = addressStatus === 'loading';
+
+  // Addressの値がReduxで更新されたらinputにも反映
+  useEffect(() => {
+    if (didFetchAddress && address) setAddressInput(address);
+  }, [address, didFetchAddress]);
 
   return (
     <div className="container mx-auto px-4 py-3">
       <h2 className="mb-8 text-xl font-bold">Ready to order? Let's go!</h2>
-      <button onClick={() => dispatch(fetchAddress())} className="mb-4">
-        Fetch address
-      </button>
 
       <Form method="post">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -68,7 +79,7 @@ function CreateOrder() {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="sm:basis-40">Address</label>
           <div className="grow">
             <input
@@ -76,10 +87,30 @@ function CreateOrder() {
               type="text"
               name="address"
               required
-              defaultValue="0-0-0 Test St, Test City"
+              value={addressInput}
+              onChange={(e) => setAddressInput(e.target.value)}
+              disabled={isLoadingAddress}
             />
           </div>
+          <span className="absolute right-[3px] z-50">
+            <Button
+              type="small"
+              onClick={(e) => {
+                e.preventDefault();
+                setDidFetchAddress(true);
+                dispatch(fetchAddress());
+              }}
+              disabled={isLoadingAddress}
+            >
+              Get Position
+            </Button>
+          </span>
         </div>
+        {addressStatus === 'error' && error && (
+          <p className="mt-2 rounded-full bg-red-100 p-2 text-xs text-red-500">
+            {error}
+          </p>
+        )}
 
         <div className="mb-4 flex items-center gap-5">
           <input
