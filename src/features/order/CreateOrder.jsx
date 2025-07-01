@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useActionData, useNavigation } from 'react-router-dom';
 import { Form, redirect } from 'react-router-dom';
 import { createOrder } from '../../services/apiRestaurant';
@@ -37,11 +37,6 @@ function CreateOrder() {
   const totalPrice = useSelector(totalCartPrice);
 
   const isLoadingAddress = addressStatus === 'loading';
-
-  // Addressの値がReduxで更新されたらinputにも反映
-  useEffect(() => {
-    if (didFetchAddress && address) setAddressInput(address);
-  }, [address, didFetchAddress]);
 
   return (
     <div className="container mx-auto px-4 py-3">
@@ -87,8 +82,7 @@ function CreateOrder() {
               type="text"
               name="address"
               required
-              value={addressInput}
-              onChange={(e) => setAddressInput(e.target.value)}
+              defaultValue={address}
               disabled={isLoadingAddress}
             />
           </div>
