@@ -17,8 +17,6 @@ const isValidPhone = (str) =>
 
 function CreateOrder() {
   const [withPriority, setWithPriority] = useState(false);
-  const [addressInput, setAddressInput] = useState('');
-  const [didFetchAddress, setDidFetchAddress] = useState(false);
   const cart = useSelector(getCart);
   const dispatch = useDispatch();
 
@@ -91,7 +89,6 @@ function CreateOrder() {
               type="small"
               onClick={(e) => {
                 e.preventDefault();
-                setDidFetchAddress(true);
                 dispatch(fetchAddress());
               }}
               disabled={isLoadingAddress}
