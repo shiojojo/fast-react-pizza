@@ -1,8 +1,13 @@
+import { useState } from 'react';
 import { useActionData, useNavigation } from 'react-router-dom';
 import { Form, redirect } from 'react-router-dom';
 import { createOrder } from '../../services/apiRestaurant';
 import Button from '../../ui/Button';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchAddress } from '../user/userSlice';
+import { getCart, clearCart, totalCartPrice } from '../cart/cartSlice';
+import store from '../../store';
+import { formatCurrency } from '../../utils/helpers';
 
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
@@ -10,33 +15,10 @@ const isValidPhone = (str) =>
     str,
   );
 
-const fakeCart = [
-  {
-    pizzaId: 12,
-    name: 'Mediterranean',
-    quantity: 2,
-    unitPrice: 16,
-    totalPrice: 32,
-  },
-  {
-    pizzaId: 6,
-    name: 'Vegetale',
-    quantity: 1,
-    unitPrice: 13,
-    totalPrice: 13,
-  },
-  {
-    pizzaId: 11,
-    name: 'Spinach and Mushroom',
-    quantity: 1,
-    unitPrice: 15,
-    totalPrice: 15,
-  },
-];
-
 function CreateOrder() {
-  // const [withPriority, setWithPriority] = useState(false);
-  const cart = fakeCart;
+  const [withPriority, setWithPriority] = useState(false);
+  const cart = useSelector(getCart);
+  const dispatch = useDispatch();
 
   const navigation = useNavigation();
 
@@ -45,10 +27,14 @@ function CreateOrder() {
   const formErrors = useActionData();
 
   const username = useSelector((state) => state.user.username);
+  const totalPrice = useSelector(totalCartPrice);
 
   return (
     <div className="container mx-auto px-4 py-3">
       <h2 className="mb-8 text-xl font-bold">Ready to order? Let's go!</h2>
+      <button onClick={() => dispatch(fetchAddress())} className="mb-4">
+        Fetch address
+      </button>
 
       <Form method="post">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -67,7 +53,13 @@ function CreateOrder() {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="sm:basis-40">Phone number</label>
           <div className="grow">
-            <input className="input" type="tel" name="phone" required />
+            <input
+              className="input"
+              type="tel"
+              name="phone"
+              required
+              defaultValue="000-0000-0000"
+            />
             {formErrors?.phone && (
               <p className="mt-2 rounded-full bg-red-100 p-2 text-xs text-red-500">
                 {formErrors.phone}
@@ -79,7 +71,13 @@ function CreateOrder() {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="sm:basis-40">Address</label>
           <div className="grow">
-            <input className="input" type="text" name="address" required />
+            <input
+              className="input"
+              type="text"
+              name="address"
+              required
+              defaultValue="0-0-0 Test St, Test City"
+            />
           </div>
         </div>
 
@@ -89,8 +87,8 @@ function CreateOrder() {
             type="checkbox"
             name="priority"
             id="priority"
-            // value={withPriority}
-            // onChange={(e) => setWithPriority(e.target.checked)}
+            value={withPriority}
+            onChange={(e) => setWithPriority(e.target.checked)}
           />
           <label className="font-semibold" htmlFor="priority">
             Want to give your order priority?
@@ -100,7 +98,13 @@ function CreateOrder() {
         <div>
           <input type="hidden" name="cart" value={JSON.stringify(cart)} />
           <Button disabled={isSubmitted} type="primary">
-            {isSubmitted ? 'Ordering...' : 'Order now'}
+            {isSubmitted
+              ? 'Ordering...'
+              : totalPrice > 0
+                ? withPriority
+                  ? `Order now from ${formatCurrency(Math.round(totalPrice * 1.2))}`
+                  : `Order now from ${formatCurrency(totalPrice)}`
+                : 'Order now'}
           </Button>
         </div>
       </Form>
@@ -130,6 +134,8 @@ export async function action({ request }) {
   }
 
   const newOrder = await createOrder(order);
+
+  store.dispatch(clearCart());
 
   return redirect(`/order/${newOrder.id}`);
 }
