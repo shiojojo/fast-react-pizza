@@ -30,7 +30,8 @@ function CreateOrder() {
     username,
     address,
     status: addressStatus,
-    error,
+    error: errorAddress,
+    position,
   } = useSelector((state) => state.user);
   const totalPrice = useSelector(totalCartPrice);
 
@@ -83,25 +84,28 @@ function CreateOrder() {
               defaultValue={address}
               disabled={isLoadingAddress}
             />
+            {addressStatus === 'error' && errorAddress && (
+              <p className="mt-2 w-full rounded-full bg-red-100 p-2 text-xs text-red-500">
+                {errorAddress}
+              </p>
+            )}
           </div>
-          <span className="absolute right-[3px] z-50">
-            <Button
-              type="small"
-              onClick={(e) => {
-                e.preventDefault();
-                dispatch(fetchAddress());
-              }}
-              disabled={isLoadingAddress}
-            >
-              Get Position
-            </Button>
-          </span>
+          {/* positionが未取得のときだけボタンを表示 */}
+          {!position?.latitude && !position?.longitude && (
+            <span className="absolute right-[3px] z-50">
+              <Button
+                type="small"
+                onClick={(e) => {
+                  e.preventDefault();
+                  dispatch(fetchAddress());
+                }}
+                disabled={isLoadingAddress}
+              >
+                Get Position
+              </Button>
+            </span>
+          )}
         </div>
-        {addressStatus === 'error' && error && (
-          <p className="mt-2 rounded-full bg-red-100 p-2 text-xs text-red-500">
-            {error}
-          </p>
-        )}
 
         <div className="mb-4 flex items-center gap-5">
           <input
@@ -119,7 +123,16 @@ function CreateOrder() {
 
         <div>
           <input type="hidden" name="cart" value={JSON.stringify(cart)} />
-          <Button disabled={isSubmitted} type="primary">
+          <input
+            type="hidden"
+            name="position"
+            value={
+              position?.latitude && position?.longitude
+                ? `${position.latitude},${position.longitude}`
+                : ''
+            }
+          />
+          <Button disabled={isSubmitted || isLoadingAddress} type="primary">
             {isSubmitted
               ? 'Ordering...'
               : totalPrice > 0
