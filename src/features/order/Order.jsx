@@ -10,6 +10,7 @@ import {
 } from '../../utils/helpers';
 import { useLoaderData } from 'react-router-dom';
 import OrderItem from './OrderItem';
+import UpdateOrderPriority from './UpdateOrderPriority';
 
 function Order() {
   const order = useLoaderData();
@@ -22,8 +23,6 @@ function Order() {
   }, [menuFetcher]);
 
   const menu = menuFetcher.data ?? [];
-
-  // Everyone can search for all orders, so for privacy reasons we're gonna gonna exclude names or address, these are only for the restaurant staff
   const {
     id,
     status,
@@ -41,11 +40,13 @@ function Order() {
         <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-stone-800">
           Order <span className="text-yellow-600">{id}</span> Status
         </h2>
-        <div className="flex items-center gap-3">
-          {priority && (
+        <div className="flex min-h-[32px] items-center gap-3">
+          {priority ? (
             <span className="inline-block rounded-full border border-red-200 bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
               PRIORITY
             </span>
+          ) : (
+            <UpdateOrderPriority orderId={id} />
           )}
           <span className="inline-block rounded-full border border-yellow-200 bg-yellow-100 px-2 py-1 text-xs font-semibold capitalize text-yellow-800">
             {status} order
